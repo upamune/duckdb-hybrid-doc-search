@@ -1,0 +1,104 @@
+{
+  "checksums": [
+    {
+      "id": "github_release/github.com/astral-sh/ruff/0.11.7/ruff-aarch64-apple-darwin.tar.gz",
+      "checksum": "1C6CC5FB36FB001DFA7331892F9D808BC7CED1D45F0EC54B4CAEAA571BC55495",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/ruff/0.11.7/ruff-aarch64-unknown-linux-musl.tar.gz",
+      "checksum": "6CF1772002CC8787F5DD24B3FA7AA86BB26AD7188854F3DF40A435467ECCE10B",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/ruff/0.11.7/ruff-x86_64-apple-darwin.tar.gz",
+      "checksum": "2ACD8B2A63749E17506CC7A4A00B2EF007A3793D365EF0B6ED2A191F77219F35",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/ruff/0.11.7/ruff-x86_64-unknown-linux-musl.tar.gz",
+      "checksum": "0CAF32AB0C399BFBA08D18B190DC1AAEC8EA47368864A4BF3B3F113E36E8FD68",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.6.17/uv-aarch64-apple-darwin.tar.gz",
+      "checksum": "E686C73B9314C77A36A6A4C9F94B07C001F0C9157C50C63C764941141C0D0088",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.6.17/uv-aarch64-unknown-linux-musl.tar.gz",
+      "checksum": "98750F5C0CD9EB520799D10649EFB18441B616150F07E6C1125F616A3FD137E8",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.6.17/uv-x86_64-apple-darwin.tar.gz",
+      "checksum": "61E9BDC02AACDB994DA6EA2A477B11B34C23FC09203237AEEE8D3817DAAB012D",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.6.17/uv-x86_64-unknown-linux-musl.tar.gz",
+      "checksum": "28BD6B50BE068CC09D8A46B76F8C4B72271D471C6673A5BDB47793622E62224D",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/duckdb/duckdb/v1.2.2/duckdb_cli-linux-aarch64.zip",
+      "checksum": "04B394D4E2FA90FC135B3417A3FBADBB765DE7CEC01A80F179BF854F8AC702A3",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/duckdb/duckdb/v1.2.2/duckdb_cli-linux-amd64.zip",
+      "checksum": "FC153822F59283E0A9374168CCE5BC85A9985E699D9857842597882062FD2CB5",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/duckdb/duckdb/v1.2.2/duckdb_cli-osx-universal.zip",
+      "checksum": "CCC67AEDBC8047454FB77B22F841C921E7AD50510BA154019C06F3D4EF49B400",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/go-task/task/v3.43.3/task_darwin_amd64.tar.gz",
+      "checksum": "4AAB49EF373CA1B61B4CFB8011A73C1200F790CC7E783E36EF33052B90D47316",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/go-task/task/v3.43.3/task_darwin_arm64.tar.gz",
+      "checksum": "39F692B91A95220ABA5E9B7C8546475AC9DD133E92CEFE97B741F917606DEDA0",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/go-task/task/v3.43.3/task_linux_amd64.tar.gz",
+      "checksum": "9F93A694464ADDAF5205661FC43FC9B9FA2B31596731E91510B41811DA79FE21",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/go-task/task/v3.43.3/task_linux_arm64.tar.gz",
+      "checksum": "B52835656FEBFCBAAA4513B8AA7B7FF3B57361DE482D6CEC8C895710D8648625",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/wagoodman/dive/v0.13.1/dive_0.13.1_darwin_amd64.tar.gz",
+      "checksum": "04E4C1BAC21BE3AEF99799CF0E470149A072EA4786BE50718AA846CD13746523",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/wagoodman/dive/v0.13.1/dive_0.13.1_darwin_arm64.tar.gz",
+      "checksum": "38B7FA95A13E7F4D0B3060C875FE7427C2A0613ECFF674BB45156EB34BCA0B09",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/wagoodman/dive/v0.13.1/dive_0.13.1_linux_amd64.tar.gz",
+      "checksum": "0970549EB4A306F8825A84145A2534153BADB4D7DCF3FEBD1967C706367C3D0E",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/wagoodman/dive/v0.13.1/dive_0.13.1_linux_arm64.tar.gz",
+      "checksum": "2FCD2CF20F634CCDB41EFAC44048B204BFC867C115641F37A7420693ED480A18",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.354.0/registry.yaml",
+      "checksum": "F7F1231D24D280558E18B9DF1972789CA821ED477E157D0605DC54E6D3F66F09CDD59A4B0A1CB47703F5331602014E8923FFF6D8C24ECEA264B10EB2F22EE38A",
+      "algorithm": "sha512"
+    }
+  ]
+}
