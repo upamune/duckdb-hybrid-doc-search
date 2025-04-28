@@ -1,6 +1,6 @@
 # duckdb-hybrid-doc-search
 
-A tool for hybrid indexing of internal documents managed in Markdown using DuckDB 1.2.2 with full-text search (FTS) + vector search (VSS), and making them callable from AI coding agents as an MCP stdio server.
+A tool for hybrid indexing of internal documents managed in Markdown using DuckDB with full-text search (FTS) + vector search (VSS), and making them callable from AI coding agents as an MCP stdio server.
 
 ## Features
 
@@ -16,6 +16,14 @@ A tool for hybrid indexing of internal documents managed in Markdown using DuckD
 
 ```bash
 duckdb-hybrid-doc-search index docs/ handbook/ \
+    --db index.duckdb
+```
+
+To use a different model, re-run the index command with a different model specified using the --embedding-model parameter.
+
+```bash
+duckdb-hybrid-doc-search index docs/ handbook/ \
+    --db index.duckdb \
     --embedding-model cl-nagoya/ruri-v3-310m
 ```
 
@@ -27,7 +35,6 @@ duckdb-hybrid-doc-search serve --db index.duckdb
 
 ### Changing the Model
 
-To use a different model, re-run the index command with a different model specified using the --embedding-model parameter.
 
 ## Docker
 
@@ -49,25 +56,183 @@ docker run -v /path/to/docs:/docs -v /path/to/output:/output \
 ### Starting the MCP Server with Docker
 
 ```bash
-# Mount the directory containing the index.duckdb file and start the server
-docker run -v /path/to/output:/data -p 8000:8000 \
+# Mount only the index.duckdb file and start the server
+docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8000:8000 \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
-    serve --db /data/index.duckdb --rerank-model cl-nagoya/ruri-v3-310m
+    serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-310m
 ```
 
 ### Searching Documents with Docker
 
 ```bash
 # Direct search with a specific query
-docker run -v /path/to/output:/data -it \
+docker run -v /path/to/index.duckdb:/app/index.duckdb -it \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
-    search --db /data/index.duckdb --query "your search query" --rerank-model cl-nagoya/ruri-v3-310m
+    search --db /app/index.duckdb --query "your search query" --rerank-model cl-nagoya/ruri-v3-310m
 
 # Interactive search mode (when --query is omitted)
-docker run -v /path/to/output:/data -it \
+docker run -v /path/to/index.duckdb:/app/index.duckdb -it \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
-    search --db /data/index.duckdb --rerank-model cl-nagoya/ruri-v3-310m
+    search --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-310m
 ```
+
+### Using as an MCP Server with VS Code and Cursor
+
+#### VS Code Configuration
+
+To use as an MCP server with VS Code:
+
+1. Create a `.vscode/mcp.json` file in your workspace:
+
+```json
+{
+  "servers": [
+    {
+      "name": "DuckDB Hybrid Doc Search",
+      "description": "Document search server for Markdown files",
+      "connection": {
+        "type": "stdio",
+        "command": "docker",
+        "args": [
+          "run",
+          "--rm",
+          "-i",
+          "-v", "${workspaceFolder}/index.duckdb:/app/index.duckdb",
+          "ghcr.io/upamune/duckdb-hybrid-doc-search:latest",
+          "serve",
+          "--db", "/app/index.duckdb",
+          "--rerank-model", "cl-nagoya/ruri-v3-310m"
+        ]
+      }
+    }
+  ]
+}
+```
+
+2. Using a pre-indexed image:
+
+```json
+{
+  "servers": [
+    {
+      "name": "DuckDB Hybrid Doc Search",
+      "description": "Pre-indexed document search server",
+      "connection": {
+        "type": "stdio",
+        "command": "docker",
+        "args": [
+          "run",
+          "--rm",
+          "-i",
+          "your-org/doc-search-with-index:latest"
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### Cursor Configuration
+
+To use as an MCP server with Cursor:
+
+1. Create a `mcp.json` file in your workspace or add to your global configuration:
+
+```json
+{
+  "mcpServers": {
+    "duckdb-doc-search": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-v", "${workspaceFolder}/index.duckdb:/app/index.duckdb",
+        "ghcr.io/upamune/duckdb-hybrid-doc-search:latest",
+        "serve",
+        "--db", "/app/index.duckdb",
+        "--rerank-model", "cl-nagoya/ruri-v3-310m"
+      ]
+    }
+  }
+}
+```
+
+2. Using a pre-indexed image:
+
+```json
+{
+  "mcpServers": {
+    "duckdb-doc-search": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "your-org/doc-search-with-index:latest"
+      ]
+    }
+  }
+}
+```
+
+## Practical Example: Creating and Distributing Docker Images with Pre-built Indexes
+
+Here's a practical example for efficiently deploying document search within your organization by pre-building indexes and embedding them in Docker images.
+
+### Creating a Docker Image with Pre-built Index
+
+Create a `Dockerfile.with-index-args` file:
+
+```dockerfile
+# Use base image with build arguments
+FROM ghcr.io/upamune/duckdb-hybrid-doc-search:latest AS builder
+
+# Define build arguments with defaults
+ARG DOCS_DIR=./docs
+ARG MODEL=cl-nagoya/ruri-v3-310m
+
+# Copy documents from specified directory
+COPY ${DOCS_DIR} /docs
+
+# Create index with specified model
+RUN duckdb-hybrid-doc-search index /docs \
+    --db /app/index.duckdb \
+    --embedding-model ${MODEL}
+
+# Create final image
+FROM ghcr.io/upamune/duckdb-hybrid-doc-search:latest
+
+# Copy index file from builder
+COPY --from=builder /app/index.duckdb /app/index.duckdb
+
+# Set default command
+CMD ["serve", "--db", "/app/index.duckdb", "--rerank-model", "cl-nagoya/ruri-v3-310m"]
+```
+
+Build and run:
+
+```bash
+# Build image for development documents
+docker build -t your-org/doc-search-dev:latest \
+  --build-arg DOCS_DIR=./docs-dev \
+  --build-arg MODEL=cl-nagoya/ruri-v3-310m \
+  -f Dockerfile.with-index-args .
+
+# Build image for production documents
+docker build -t your-org/doc-search-prod:latest \
+  --build-arg DOCS_DIR=./docs-prod \
+  --build-arg MODEL=cl-nagoya/ruri-v3-310m \
+  -f Dockerfile.with-index-args .
+
+# Push to your organization's registry
+docker push your-org/doc-search-prod:latest
+
+# Run (no volume mount needed as index is included in the image)
+docker run -p 8000:8000 your-org/doc-search-prod:latest
+```
+
+This approach enables efficient deployment and management of document search systems within your organization.
 
 ## Development
 
