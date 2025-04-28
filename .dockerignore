@@ -1,0 +1,6 @@
+.venv
+__pycahce__
+.pytest_cache
+.ruff_cache
+
+sample_docs/

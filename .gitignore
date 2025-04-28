@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.duckdb
+.mypy_cache/
+.ruff_cache/
+dist/
+coverage.xml
