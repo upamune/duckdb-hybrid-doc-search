@@ -213,7 +213,7 @@ def search(
         help="Prefix to add to file paths in search results",
     ),
     rerank_model: str = typer.Option(
-        "cl-nagoya/ruri-v3-310m",
+        "cl-nagoya/ruri-v3-reranker-310m",
         "--rerank-model",
         "-r",
         help="Hugging Face model ID for reranking",

@@ -5,7 +5,7 @@ version: '3'
 vars:
   DB_PATH: '{{default "index.duckdb" .DB_PATH}}'
   EMBEDDING_MODEL: '{{default "cl-nagoya/ruri-v3-310m" .EMBEDDING_MODEL}}'
-  RERANK_MODEL: '{{default "cl-nagoya/ruri-v3-310m" .RERANK_MODEL}}'
+  RERANK_MODEL: '{{default "cl-nagoya/ruri-v3-reranker-310m" .RERANK_MODEL}}'
 
 tasks:
   default:

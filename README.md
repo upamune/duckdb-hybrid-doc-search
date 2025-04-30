@@ -59,7 +59,7 @@ docker run -v /path/to/docs:/docs -v /path/to/output:/output \
 # Mount only the index.duckdb file and start the server
 docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8000:8000 \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
-    serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-310m
+    serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m
 ```
 
 ### Searching Documents with Docker
@@ -68,12 +68,12 @@ docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8000:8000 \
 # Direct search with a specific query
 docker run -v /path/to/index.duckdb:/app/index.duckdb -it \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
-    search --db /app/index.duckdb --query "your search query" --rerank-model cl-nagoya/ruri-v3-310m
+    search --db /app/index.duckdb --query "your search query" --rerank-model cl-nagoya/ruri-v3-reranker-310m
 
 # Interactive search mode (when --query is omitted)
 docker run -v /path/to/index.duckdb:/app/index.duckdb -it \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
-    search --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-310m
+    search --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m
 ```
 
 ### Using as an MCP Server with VS Code and Cursor
@@ -101,7 +101,7 @@ To use as an MCP server with VS Code:
           "ghcr.io/upamune/duckdb-hybrid-doc-search:latest",
           "serve",
           "--db", "/app/index.duckdb",
-          "--rerank-model", "cl-nagoya/ruri-v3-310m"
+          "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"
         ]
       }
     }
@@ -151,7 +151,7 @@ To use as an MCP server with Cursor:
         "ghcr.io/upamune/duckdb-hybrid-doc-search:latest",
         "serve",
         "--db", "/app/index.duckdb",
-        "--rerank-model", "cl-nagoya/ruri-v3-310m"
+        "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"
       ]
     }
   }
@@ -207,7 +207,7 @@ FROM ghcr.io/upamune/duckdb-hybrid-doc-search:latest
 COPY --from=builder /app/index.duckdb /app/index.duckdb
 
 # Set default command
-CMD ["serve", "--db", "/app/index.duckdb", "--rerank-model", "cl-nagoya/ruri-v3-310m"]
+CMD ["serve", "--db", "/app/index.duckdb", "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"]
 ```
 
 Build and run:
