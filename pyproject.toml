@@ -37,7 +37,7 @@ dependencies = [
     "iniconfig==2.1.0",
     "jinja2==3.1.6",
     "joblib==1.4.2",
-    "lindera-py==0.41.0",
+    "lindera-py>=0.42.0",
     "llama-index-core==0.12.33.post1",
     "markdown-it-py==3.0.0",
     "markupsafe==3.0.2",

@@ -71,4 +71,4 @@ def run_server(db_path: str, prefix: str, rerank_model: str) -> None:
 
     # Run server
     logger.info("Starting MCP stdio server")
-    mcp.run_stdio(server_options={"file_path_prefix": prefix})
+    mcp.run(transport="stdio")

@@ -75,10 +75,7 @@ def index(
                 sys.exit(1)
 
         # Initialize database
-        conn = init_db(db, read_only=False)
-
-        # Store embedding model in settings
-        store_setting(conn, "embedding_model", embedding_model)
+        conn = init_db(db, read_only=False, embedding_model=embedding_model)
 
         # Index documents
         index_directories(
@@ -111,7 +108,7 @@ def serve(
         help="Prefix to add to file paths in search results",
     ),
     rerank_model: str = typer.Option(
-        "cl-nagoya/ruri-v3-310m",
+        "cl-nagoya/ruri-v3-reranker-310m",
         "--rerank-model",
         "-r",
         help="Hugging Face model ID for reranking",
