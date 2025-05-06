@@ -1,2 +1,0 @@
-[console_scripts]
-duckdb-hybrid-doc-search = duckdb_hybrid_document_search.cli:app
