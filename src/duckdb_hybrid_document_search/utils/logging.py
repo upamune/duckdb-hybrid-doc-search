@@ -23,16 +23,15 @@ def setup_logger(
     Returns:
         Configured logger
     """
-    if console is None:
-        console = Console()
 
-    # Create logger
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
     # Remove existing handlers
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
+
+    console = Console(stderr=True)
 
     # Create Rich handler
     handler = RichHandler(

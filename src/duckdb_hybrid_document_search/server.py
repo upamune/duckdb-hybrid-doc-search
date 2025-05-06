@@ -12,7 +12,6 @@ from duckdb_hybrid_document_search.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 def run_server(db_path: str, prefix: str, rerank_model: str) -> None:
     """Run MCP stdio server.
 
@@ -37,13 +36,11 @@ def run_server(db_path: str, prefix: str, rerank_model: str) -> None:
     logger.info(f"Using embedding model: {embedding_model}")
     logger.info(f"Using reranker model: {rerank_model}")
 
-    # Initialize models
     init_models(embedding_model, rerank_model)
 
-    # Create MCP server
     mcp = FastMCP("duckdb-hybrid-doc-search")
 
-    @mcp.tool()
+    @mcp.tool(description="Search for local documents")
     def search_documents(
         query: str,
         top_k: int = 5,
