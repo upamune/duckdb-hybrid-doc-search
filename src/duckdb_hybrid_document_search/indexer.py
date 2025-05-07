@@ -78,10 +78,15 @@ def index_directories(
         # Generate a ULID for each document
         doc_id = str(ULID())
 
+        # Remove leading slash from file path if present
+        file_path = chunk.file_path
+        if file_path.startswith('/'):
+            file_path = file_path[1:]
+
         data.append(
             {
                 "doc_id": doc_id,
-                "file_path": chunk.file_path,
+                "file_path": file_path,
                 "header_path": chunk.header_path,
                 "line_start": chunk.line_start,
                 "line_end": chunk.line_end,

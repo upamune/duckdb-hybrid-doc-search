@@ -151,8 +151,8 @@ def search(
 
         # Add file path prefix if provided
         if file_path_prefix:
-            # 相対パスを使用する場合、ファイル名だけを取得して結合
-            full_path = os.path.join(file_path_prefix, os.path.basename(file_path))
+            # Use the full relative path, not just the basename
+            full_path = os.path.join(file_path_prefix, file_path)
         else:
             full_path = file_path
 
