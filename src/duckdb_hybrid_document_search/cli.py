@@ -14,6 +14,7 @@ from duckdb_hybrid_document_search.db import init_db, store_setting
 from duckdb_hybrid_document_search.indexer import index_directories
 from duckdb_hybrid_document_search.searcher import init_models
 from duckdb_hybrid_document_search.server import run_server
+from duckdb_hybrid_document_search.splitter import SplitterType
 from duckdb_hybrid_document_search.utils.logging import setup_logger
 
 app = typer.Typer(
@@ -65,6 +66,12 @@ def index(
         "--clear",
         help="Clear existing documents before indexing",
     ),
+    splitter: str = typer.Option(
+        "chonkie",
+        "--splitter",
+        "-s",
+        help="Splitter type to use (chonkie or llama-index)",
+    ),
 ):
     """Index Markdown documents for hybrid search."""
     try:
@@ -77,6 +84,11 @@ def index(
         # Initialize database
         conn = init_db(db, read_only=False, embedding_model=embedding_model)
 
+        # Convert splitter string to enum
+        splitter_type = SplitterType.CHONKIE
+        if splitter.lower() == "llama-index":
+            splitter_type = SplitterType.LLAMA_INDEX
+
         # Index documents
         index_directories(
             conn=conn,
@@ -84,6 +96,7 @@ def index(
             embedding_model=embedding_model,
             workers=workers,
             clear=clear,
+            splitter_type=splitter_type,
         )
 
         console.print(f"[green]Indexing complete. Database saved to {db}[/green]")

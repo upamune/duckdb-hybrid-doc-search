@@ -10,7 +10,7 @@ from ulid import ULID
 
 from duckdb_hybrid_document_search.db import clear_documents
 from duckdb_hybrid_document_search.models.embedding import generate_embeddings
-from duckdb_hybrid_document_search.splitter import Chunk, MarkdownSplitter
+from duckdb_hybrid_document_search.splitter import Chunk, SplitterType, create_splitter
 from duckdb_hybrid_document_search.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -22,6 +22,7 @@ def index_directories(
     embedding_model: str,
     workers: int = 4,
     clear: bool = False,
+    splitter_type: SplitterType = SplitterType.CHONKIE,
 ) -> None:
     """Index Markdown documents in directories.
 
@@ -31,6 +32,7 @@ def index_directories(
         embedding_model: Hugging Face model ID for embeddings
         workers: Number of worker processes
         clear: Whether to clear existing documents
+        splitter_type: Type of splitter to use (CHONKIE or LLAMA_INDEX)
     """
     logger.info(f"Indexing directories: {', '.join(directories)}")
 
@@ -38,8 +40,9 @@ def index_directories(
     if clear:
         clear_documents(conn)
 
-    # Create splitter
-    splitter = MarkdownSplitter()
+    # Create splitter using factory function
+    splitter = create_splitter(splitter_type=splitter_type)
+    logger.info(f"Using splitter: {splitter_type.name} ({splitter.__class__.__name__})")
 
     # Split documents
     with Progress(
