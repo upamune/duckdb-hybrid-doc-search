@@ -1,12 +1,13 @@
 """Document splitter implementations for Markdown files."""
 
 import os
+import concurrent.futures
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Callable
 
 from chonkie import RecursiveChunker, RecursiveRules, RecursiveLevel
 from lindera_py import Segmenter, Tokenizer, load_dictionary
@@ -377,6 +378,7 @@ class LlamaIndexSplitter:
         directory_paths: List[str],
         workers: int = 4,
         file_extension: str = ".md",
+        progress_callback=None,
     ) -> List[Chunk]:
         """Split all Markdown files in directories.
 
@@ -384,6 +386,7 @@ class LlamaIndexSplitter:
             directory_paths: List of directory paths to process
             workers: Number of worker processes
             file_extension: File extension to filter
+            progress_callback: Optional callback function to report progress
 
         Returns:
             List of Chunk objects from all files
@@ -395,6 +398,10 @@ class LlamaIndexSplitter:
                     if file.endswith(file_extension):
                         md_files.append(os.path.join(root, file))
 
+        total_files = len(md_files)
+        if progress_callback:
+            progress_callback(0, total_files)
+
         # Create a list of tuples with file path, dict type, chunk size, and chunk overlap
         args_list = [
             (file_path, "ipadic", self.chunk_size, self.chunk_overlap) for file_path in md_files
@@ -403,14 +410,22 @@ class LlamaIndexSplitter:
         all_chunks = []
         if workers <= 1:
             # Process sequentially if workers is 1 or less
-            for args in args_list:
+            for i, args in enumerate(args_list):
                 all_chunks.extend(_process_file(args))
+                if progress_callback:
+                    progress_callback(i + 1, total_files)
         else:
             # Process in parallel using the standalone function
             with ProcessPoolExecutor(max_workers=workers) as executor:
-                chunk_lists = list(executor.map(_process_file, args_list))
-                for chunk_list in chunk_lists:
+                # Use as_completed to track progress
+                futures = {executor.submit(_process_file, args): i
+                          for i, args in enumerate(args_list)}
+
+                for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                    chunk_list = future.result()
                     all_chunks.extend(chunk_list)
+                    if progress_callback:
+                        progress_callback(i + 1, total_files)
 
         return all_chunks
 
@@ -499,6 +514,7 @@ class ChonkieSplitter:
         directory_paths: List[str],
         workers: int = 4,
         file_extension: str = ".md",
+        progress_callback=None,
     ) -> List[Chunk]:
         """Split all Markdown files in directories.
 
@@ -506,6 +522,7 @@ class ChonkieSplitter:
             directory_paths: List of directory paths to process
             workers: Number of worker processes
             file_extension: File extension to filter
+            progress_callback: Optional callback function to report progress
 
         Returns:
             List of Chunk objects from all files
@@ -517,11 +534,17 @@ class ChonkieSplitter:
                     if file.endswith(file_extension):
                         md_files.append(os.path.join(root, file))
 
+        total_files = len(md_files)
+        if progress_callback:
+            progress_callback(0, total_files)
+
         all_chunks = []
         if workers <= 1:
             # Process sequentially
-            for file_path in md_files:
+            for i, file_path in enumerate(md_files):
                 all_chunks.extend(self.split_file(file_path))
+                if progress_callback:
+                    progress_callback(i + 1, total_files)
         else:
             # Process in parallel using a standalone function
             # Create a list of tuples with file path, chunk size, chunk overlap, and tokenizer dict type
@@ -531,9 +554,15 @@ class ChonkieSplitter:
             ]
 
             with ProcessPoolExecutor(max_workers=workers) as executor:
-                chunk_lists = list(executor.map(_process_file_chonkie, args_list))
-                for chunk_list in chunk_lists:
+                # Use as_completed to track progress
+                futures = {executor.submit(_process_file_chonkie, args): i
+                          for i, args in enumerate(args_list)}
+
+                for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                    chunk_list = future.result()
                     all_chunks.extend(chunk_list)
+                    if progress_callback:
+                        progress_callback(i + 1, total_files)
 
         return all_chunks
 

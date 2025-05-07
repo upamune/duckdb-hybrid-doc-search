@@ -50,8 +50,22 @@ def index_directories(
         TextColumn("[progress.description]{task.description}"),
         transient=False,
     ) as progress:
-        progress.add_task("Splitting documents...", total=None)
-        chunks = splitter.split_directory(directories, workers=workers)
+        # Add a task with an unknown total initially
+        task_id = progress.add_task("Scanning directories...", total=None)
+
+        # Define a callback function to update progress
+        def update_progress(completed, total):
+            # Update the total if it's the first update
+            if progress.tasks[task_id].total is None and total > 0:
+                progress.update(task_id, total=total, description=f"Splitting documents... [0/{total}]")
+
+            # Update the progress
+            if total > 0:
+                progress.update(task_id, completed=completed,
+                               description=f"Splitting documents... [{completed}/{total}]")
+
+        # Call split_directory with the progress callback
+        chunks = splitter.split_directory(directories, workers=workers, progress_callback=update_progress)
 
     if not chunks:
         logger.warning("No documents found to index")
