@@ -8,8 +8,8 @@ import duckdb
 import numpy as np
 from lindera_py import Segmenter, Tokenizer, load_dictionary
 
-from duckdb_hybrid_document_search.models.embedding import generate_embeddings
-from duckdb_hybrid_document_search.models.reranker import rerank_results
+from duckdb_hybrid_document_search.models.embedding import generate_embeddings, get_embedding_model
+from duckdb_hybrid_document_search.models.reranker import rerank_results, get_reranker_model
 from duckdb_hybrid_document_search.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -43,6 +43,13 @@ def init_models(embedding_model: str, reranker_model: str) -> None:
     # Set model names
     _embedding_model = embedding_model
     _reranker_model = reranker_model
+
+    # Preload models to avoid delay on first search
+    logger.info("Preloading embedding model...")
+    get_embedding_model(embedding_model)
+
+    logger.info("Preloading reranker model...")
+    get_reranker_model(reranker_model)
 
 
 def tokenize_query(query: str) -> str:
