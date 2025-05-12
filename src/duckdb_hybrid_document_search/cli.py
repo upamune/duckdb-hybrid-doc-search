@@ -72,6 +72,12 @@ def index(
         "-s",
         help="Splitter type to use (chonkie or llama-index)",
     ),
+    path_prefix_to_trim: Optional[str] = typer.Option(
+        None,
+        "--trim-path-prefix",
+        "-t",
+        help="Prefix to trim from file paths during indexing (e.g., '/app/')",
+    ),
 ):
     """Index Markdown documents for hybrid search."""
     try:
@@ -97,6 +103,7 @@ def index(
             workers=workers,
             clear=clear,
             splitter_type=splitter_type,
+            path_prefix_to_trim=path_prefix_to_trim,
         )
 
         console.print(f"[green]Indexing complete. Database saved to {db}[/green]")

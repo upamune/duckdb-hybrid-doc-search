@@ -68,6 +68,7 @@ tasks:
     vars:
       DIRS: '{{default "docs/" .DIRS}}'
       ARGS: '{{default "" .ARGS}}'
+      # Example: ARGS="--trim-path-prefix /app/"
 
   run:serve:
     desc: "Start MCP stdio server"

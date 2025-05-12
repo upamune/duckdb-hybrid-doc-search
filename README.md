@@ -27,6 +27,14 @@ duckdb-hybrid-doc-search index docs/ handbook/ \
     --embedding-model cl-nagoya/ruri-v3-310m
 ```
 
+You can also trim a prefix from file paths during indexing, which is useful when using Docker:
+
+```bash
+duckdb-hybrid-doc-search index docs/ handbook/ \
+    --db index.duckdb \
+    --trim-path-prefix "/app/"
+```
+
 ### Starting the Server
 
 ```bash
@@ -182,6 +190,8 @@ Here's a practical example for efficiently deploying document search within your
 
 ### Creating a Docker Image with Pre-built Index
 
+When using Docker, file paths in the index often include the container path (like `/app/docs/`), but you might want search results to show just `docs/`. The `--trim-path-prefix` parameter solves this by removing the specified prefix from file paths during indexing.
+
 Create a `Dockerfile.with-index-args` file:
 
 ```dockerfile
@@ -198,7 +208,8 @@ COPY ${DOCS_DIR} /docs
 # Create index with specified model
 RUN duckdb-hybrid-doc-search index /docs \
     --db /app/index.duckdb \
-    --embedding-model ${MODEL}
+    --embedding-model ${MODEL} \
+    --trim-path-prefix "/app/"
 
 # Create final image
 FROM ghcr.io/upamune/duckdb-hybrid-doc-search:latest

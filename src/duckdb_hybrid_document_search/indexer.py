@@ -23,6 +23,7 @@ def index_directories(
     workers: int = 4,
     clear: bool = False,
     splitter_type: SplitterType = SplitterType.CHONKIE,
+    path_prefix_to_trim: str = None,
 ) -> None:
     """Index Markdown documents in directories.
 
@@ -33,6 +34,7 @@ def index_directories(
         workers: Number of worker processes
         clear: Whether to clear existing documents
         splitter_type: Type of splitter to use (CHONKIE or LLAMA_INDEX)
+        path_prefix_to_trim: Prefix to trim from file paths (e.g., '/app/')
     """
     logger.info(f"Indexing directories: {', '.join(directories)}")
 
@@ -95,10 +97,12 @@ def index_directories(
         # Generate a ULID for each document
         doc_id = str(ULID())
 
-        # Remove leading slash from file path if present
+        # Process file path
         file_path = chunk.file_path
-        if file_path.startswith('/'):
-            file_path = file_path[1:]
+
+        # Trim specified prefix if provided
+        if path_prefix_to_trim and file_path.startswith(path_prefix_to_trim):
+            file_path = file_path[len(path_prefix_to_trim):]
 
         data.append(
             {

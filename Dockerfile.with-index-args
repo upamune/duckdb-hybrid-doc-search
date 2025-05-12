@@ -3,23 +3,22 @@ FROM ghcr.io/upamune/duckdb-hybrid-doc-search:latest AS builder
 
 # Define build arguments with defaults
 ARG DOCS_DIR=./docs
-ARG MODEL=cl-nagoya/ruri-v3-310m
+ARG EMBEDDING_MODEL=cl-nagoya/ruri-v3-310m
+ARG RERANK_MODEL=cl-nagoya/ruri-v3-reranker-310m
 
 # Copy documents from specified directory
 COPY ${DOCS_DIR} /app/docs
 
-# Create index with specified model
-RUN duckdb-hybrid-doc-search index /docs \
+# Create index with specified model - this will download and cache the embedding model
+RUN duckdb-hybrid-doc-search index /app/docs \
     --db /app/index.duckdb \
-    --embedding-model ${MODEL}
+    --embedding-model ${EMBEDDING_MODEL} \
+    --trim-path-prefix "/app/"
 
-# Create final image
-FROM ghcr.io/upamune/duckdb-hybrid-doc-search:latest
-
-# Copy index file from builder
-COPY --from=builder /app/index.duckdb /app/index.duckdb
+# Pre-download and cache the reranker model
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('${RERANK_MODEL}')"
 
 WORKDIR /app
 
-# Run the server
+# Run the server with the same reranker model that was pre-cached
 CMD ["serve", "--db", "/app/index.duckdb", "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"]
