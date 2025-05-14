@@ -41,6 +41,14 @@ duckdb-hybrid-doc-search index docs/ handbook/ \
 duckdb-hybrid-doc-search serve --db index.duckdb
 ```
 
+You can customize the MCP tool name and description:
+
+```bash
+duckdb-hybrid-doc-search serve --db index.duckdb \
+    --tool-name "my_search" \
+    --tool-description "Search my documentation"
+```
+
 ### Changing the Model
 
 
@@ -68,6 +76,12 @@ docker run -v /path/to/docs:/docs -v /path/to/output:/output \
 docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8000:8000 \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
     serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m
+
+# With custom tool name and description
+docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8000:8000 \
+    ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
+    serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m \
+    --tool-name "my_search" --tool-description "Search my documentation"
 ```
 
 ### Searching Documents with Docker
@@ -109,7 +123,9 @@ To use as an MCP server with VS Code:
           "ghcr.io/upamune/duckdb-hybrid-doc-search:latest",
           "serve",
           "--db", "/app/index.duckdb",
-          "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"
+          "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m",
+          "--tool-name", "search_documents",
+          "--tool-description", "Search for documentation"
         ]
       }
     }
@@ -159,7 +175,9 @@ To use as an MCP server with Cursor:
         "ghcr.io/upamune/duckdb-hybrid-doc-search:latest",
         "serve",
         "--db", "/app/index.duckdb",
-        "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"
+        "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m",
+        "--tool-name", "search_documents",
+        "--tool-description", "Search for documentation"
       ]
     }
   }
@@ -218,7 +236,7 @@ FROM ghcr.io/upamune/duckdb-hybrid-doc-search:latest
 COPY --from=builder /app/index.duckdb /app/index.duckdb
 
 # Set default command
-CMD ["serve", "--db", "/app/index.duckdb", "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"]
+CMD ["serve", "--db", "/app/index.duckdb", "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m", "--tool-name", "search_documents", "--tool-description", "Search for documentation"]
 ```
 
 Build and run:

@@ -12,15 +12,25 @@ from duckdb_hybrid_document_search.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-def run_server(db_path: str, prefix: str, rerank_model: str) -> None:
+def run_server(
+    db_path: str,
+    prefix: str,
+    rerank_model: str,
+    tool_name: str = "search_documents",
+    tool_description: str = "Search for local documents"
+) -> None:
     """Run MCP stdio server.
 
     Args:
         db_path: Path to DuckDB database
         prefix: Prefix to add to file paths in search results
         rerank_model: Hugging Face model ID for reranking
+        tool_name: Name of the MCP tool (default: "search_documents")
+        tool_description: Description of the MCP tool (default: "Search for local documents")
     """
     logger.info(f"Starting MCP server with database: {db_path}")
+    logger.info(f"Using tool name: {tool_name}")
+    logger.info(f"Using tool description: {tool_description}")
 
     # Connect to database
     conn = init_db(db_path, read_only=True)
@@ -40,7 +50,7 @@ def run_server(db_path: str, prefix: str, rerank_model: str) -> None:
 
     mcp = FastMCP("duckdb-hybrid-doc-search")
 
-    @mcp.tool(description="Search for local documents")
+    @mcp.tool(name=tool_name, description=tool_description)
     def search_documents(
         query: str,
         top_k: int = 5,

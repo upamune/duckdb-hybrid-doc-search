@@ -133,6 +133,16 @@ def serve(
         "-r",
         help="Hugging Face model ID for reranking",
     ),
+    tool_name: str = typer.Option(
+        "search_documents",
+        "--tool-name",
+        help="Name of the MCP tool",
+    ),
+    tool_description: str = typer.Option(
+        "Search for local documents",
+        "--tool-description",
+        help="Description of the MCP tool",
+    ),
 ):
     """Start MCP stdio server for document search."""
     try:
@@ -145,7 +155,13 @@ def serve(
             file_path_prefix = os.path.dirname(db)
 
         # Start server
-        run_server(db_path=db, prefix=file_path_prefix, rerank_model=rerank_model)
+        run_server(
+            db_path=db,
+            prefix=file_path_prefix,
+            rerank_model=rerank_model,
+            tool_name=tool_name,
+            tool_description=tool_description
+        )
 
     except Exception as e:
         console.print(f"[red]Error starting server: {str(e)}[/red]")
