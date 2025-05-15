@@ -22,7 +22,7 @@ def index_directories(
     embedding_model: str,
     workers: int = 4,
     clear: bool = False,
-    splitter_type: SplitterType = SplitterType.CHONKIE,
+    splitter_type: SplitterType = SplitterType.LLAMA_INDEX,
     path_prefix_to_trim: str = None,
 ) -> None:
     """Index Markdown documents in directories.

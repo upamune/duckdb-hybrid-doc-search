@@ -619,7 +619,7 @@ class ChonkieSplitter:
 
 
 def create_splitter(
-    splitter_type: SplitterType = SplitterType.CHONKIE,
+    splitter_type: SplitterType = SplitterType.LLAMA_INDEX,
     chunk_size: int = 512,
     chunk_overlap: int = 50,
     tokenizer_dict_type: str = "ipadic",

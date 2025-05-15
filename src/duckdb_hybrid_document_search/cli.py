@@ -69,7 +69,7 @@ def index(
         help="Clear existing documents before indexing",
     ),
     splitter: str = typer.Option(
-        "chonkie",
+        "llama-index",
         "--splitter",
         "-s",
         help="Splitter type to use (chonkie or llama-index)",
@@ -93,9 +93,9 @@ def index(
         conn = init_db(db, read_only=False, embedding_model=embedding_model)
 
         # Convert splitter string to enum
-        splitter_type = SplitterType.CHONKIE
-        if splitter.lower() == "llama-index":
-            splitter_type = SplitterType.LLAMA_INDEX
+        splitter_type = SplitterType.LLAMA_INDEX
+        if splitter.lower() == "chonkie":
+            splitter_type = SplitterType.CHONKIE
 
         # Index documents
         index_directories(
