@@ -1,5 +1,7 @@
 # Changelog
 
+## [v0.0.6](https://github.com/upamune/duckdb-hybrid-doc-search/compare/v0.0.5...v0.0.6) - 2025-05-15
+
 ## [v0.0.5](https://github.com/upamune/duckdb-hybrid-doc-search/compare/v0.0.4...v0.0.5) - 2025-05-15
 
 ## [v0.0.4](https://github.com/upamune/duckdb-hybrid-doc-search/compare/v0.0.3...v0.0.4) - 2025-05-14
