@@ -61,7 +61,9 @@ def run_server(
 
     init_models(embedding_model, rerank_model)
 
-    mcp = FastMCP("duckdb-hybrid-doc-search")
+    mcp = FastMCP(name="duckdb-hybrid-doc-search")
+    if transport == "streamable-http":
+        mcp = FastMCP(name="duckdb-hybrid-doc-search", host=host, port=port, path=path)
 
     @mcp.tool(name=tool_name, description=tool_description)
     def search_documents(
@@ -95,4 +97,4 @@ def run_server(
         mcp.run(transport="stdio")
     elif transport == "streamable-http":
         logger.info(f"Starting MCP streamable-http server on {host}:{port}{path}")
-        mcp.run(transport="streamable-http", host=host, port=port, path=path)
+        mcp.run(transport="streamable-http")
