@@ -20,5 +20,20 @@ RUN duckdb-hybrid-doc-search download-models ${EMBEDDING_MODEL} ${RERANK_MODEL}
 
 WORKDIR /app
 
-# Run the server with the same reranker model that was pre-cached
-CMD ["serve", "--db", "/app/index.duckdb", "--rerank-model", "cl-nagoya/ruri-v3-reranker-310m"]
+# Define default transport (can be overridden at runtime)
+ARG TRANSPORT=stdio
+ARG HOST=0.0.0.0
+ARG PORT=8765
+ARG PATH=/mcp
+
+# Run the server with the specified transport
+# Note: The transport type can be overridden at runtime with:
+# docker run -e TRANSPORT=streamable-http -e HOST=0.0.0.0 -e PORT=8765 -e PATH=/mcp ...
+ENTRYPOINT ["sh", "-c"]
+CMD ["if [ \"$TRANSPORT\" = \"stdio\" ]; then \
+      duckdb-hybrid-doc-search serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m --transport stdio; \
+    elif [ \"$TRANSPORT\" = \"streamable-http\" ]; then \
+      duckdb-hybrid-doc-search serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m --transport streamable-http --host $HOST --port $PORT --path $PATH; \
+    else \
+      echo \"Unknown transport: $TRANSPORT\"; exit 1; \
+    fi"]

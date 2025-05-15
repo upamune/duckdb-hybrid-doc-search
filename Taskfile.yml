@@ -71,10 +71,14 @@ tasks:
       # Example: ARGS="--trim-path-prefix /app/"
 
   run:serve:
-    desc: "Start MCP stdio server"
+    desc: "Start MCP server with specified transport"
     cmds:
-      - duckdb-hybrid-doc-search serve --db {{.DB_PATH}} --rerank-model {{.RERANK_MODEL}} {{.ARGS}}
+      - duckdb-hybrid-doc-search serve --db {{.DB_PATH}} --rerank-model {{.RERANK_MODEL}} --transport {{.TRANSPORT}} {{if eq .TRANSPORT "streamable-http"}}--host {{.HOST}} --port {{.PORT}} --path {{.PATH}}{{end}} {{.ARGS}}
     vars:
+      TRANSPORT: '{{default "stdio" .TRANSPORT}}'
+      HOST: '{{default "127.0.0.1" .HOST}}'
+      PORT: '{{default "8765" .PORT}}'
+      PATH: '{{default "/mcp" .PATH}}'
       ARGS: '{{default "" .ARGS}}'
 
   run:search:

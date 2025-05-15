@@ -37,6 +37,8 @@ duckdb-hybrid-doc-search index docs/ handbook/ \
 
 ### Starting the Server
 
+By default, the server uses STDIO transport:
+
 ```bash
 duckdb-hybrid-doc-search serve --db index.duckdb
 ```
@@ -47,6 +49,18 @@ You can customize the MCP tool name and description:
 duckdb-hybrid-doc-search serve --db index.duckdb \
     --tool-name "my_search" \
     --tool-description "Search my documentation"
+```
+
+#### HTTP Transport Support
+
+The server also supports HTTP-based transport:
+
+```bash
+duckdb-hybrid-doc-search serve --db index.duckdb \
+    --transport streamable-http \
+    --host 127.0.0.1 \
+    --port 8765 \
+    --path /mcp
 ```
 
 ### Changing the Model
@@ -71,18 +85,32 @@ docker run -v /path/to/docs:/docs -v /path/to/output:/output \
 
 ### Starting the MCP Server with Docker
 
+#### STDIO Transport (Default)
+
 ```bash
-# Mount only the index.duckdb file and start the server
-docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8000:8000 \
+# Mount only the index.duckdb file and start the server with STDIO transport
+docker run -v /path/to/index.duckdb:/app/index.duckdb \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
     serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m
 
 # With custom tool name and description
-docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8000:8000 \
+docker run -v /path/to/index.duckdb:/app/index.duckdb \
     ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
     serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m \
     --tool-name "my_search" --tool-description "Search my documentation"
 ```
+
+#### HTTP Transport
+
+```bash
+# Using Streamable HTTP transport
+docker run -v /path/to/index.duckdb:/app/index.duckdb -p 8765:8765 \
+    ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
+    serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m \
+    --transport streamable-http --host 0.0.0.0 --port 8765 --path /mcp
+```
+
+> **Note:** When running in Docker, use `--host 0.0.0.0` to make the server accessible from outside the container.
 
 ### Searching Documents with Docker
 
@@ -104,7 +132,9 @@ docker run -v /path/to/index.duckdb:/app/index.duckdb -it \
 
 To use as an MCP server with VS Code:
 
-1. Create a `.vscode/mcp.json` file in your workspace:
+##### STDIO Transport (Default)
+
+Create a `.vscode/mcp.json` file in your workspace:
 
 ```json
 {
@@ -133,7 +163,35 @@ To use as an MCP server with VS Code:
 }
 ```
 
-2. Using a pre-indexed image:
+##### HTTP Transport
+
+For HTTP-based transport, use the `http` connection type:
+
+```json
+{
+  "servers": [
+    {
+      "name": "DuckDB Hybrid Doc Search",
+      "description": "Document search server with HTTP transport",
+      "connection": {
+        "type": "http",
+        "url": "http://localhost:8765/mcp"
+      }
+    }
+  ]
+}
+```
+
+Then start the server separately with:
+
+```bash
+docker run -v ${workspaceFolder}/index.duckdb:/app/index.duckdb -p 8765:8765 \
+  ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
+  serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m \
+  --transport streamable-http --host 0.0.0.0 --port 8765 --path /mcp
+```
+
+##### Using a Pre-indexed Image
 
 ```json
 {
@@ -160,7 +218,9 @@ To use as an MCP server with VS Code:
 
 To use as an MCP server with Cursor:
 
-1. Create a `mcp.json` file in your workspace or add to your global configuration:
+##### STDIO Transport (Default)
+
+Create a `mcp.json` file in your workspace or add to your global configuration:
 
 ```json
 {
@@ -184,7 +244,30 @@ To use as an MCP server with Cursor:
 }
 ```
 
-2. Using a pre-indexed image:
+##### HTTP Transport
+
+For HTTP-based transport, use the `url` property:
+
+```json
+{
+  "mcpServers": {
+    "duckdb-doc-search": {
+      "url": "http://localhost:8765/mcp"
+    }
+  }
+}
+```
+
+Then start the server separately with:
+
+```bash
+docker run -v ${workspaceFolder}/index.duckdb:/app/index.duckdb -p 8765:8765 \
+  ghcr.io/upamune/duckdb-hybrid-doc-search:latest \
+  serve --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m \
+  --transport streamable-http --host 0.0.0.0 --port 8765 --path /mcp
+```
+
+##### Using a Pre-indexed Image
 
 ```json
 {
@@ -257,8 +340,14 @@ docker build -t your-org/doc-search-prod:latest \
 # Push to your organization's registry
 docker push your-org/doc-search-prod:latest
 
-# Run (no volume mount needed as index is included in the image)
-docker run -p 8000:8000 your-org/doc-search-prod:latest
+# Run with STDIO transport (default)
+docker run your-org/doc-search-prod:latest
+
+# Run with Streamable HTTP transport
+docker run -p 8765:8765 -e TRANSPORT=streamable-http your-org/doc-search-prod:latest
+
+# Run with custom HTTP settings
+docker run -p 9000:9000 -e TRANSPORT=streamable-http -e PORT=9000 -e PATH=/api/mcp your-org/doc-search-prod:latest
 ```
 
 This approach enables efficient deployment and management of document search systems within your organization.

@@ -145,11 +145,38 @@ def serve(
         "--tool-description",
         help="Description of the MCP tool",
     ),
+    transport: str = typer.Option(
+        "stdio",
+        "--transport",
+        "-t",
+        help="Transport protocol to use (stdio, streamable-http)",
+    ),
+    host: str = typer.Option(
+        "127.0.0.1",
+        "--host",
+        help="Host to bind to for HTTP transport",
+    ),
+    port: int = typer.Option(
+        8765,
+        "--port",
+        help="Port to bind to for HTTP transport",
+    ),
+    path: str = typer.Option(
+        "/mcp",
+        "--path",
+        help="Path for streamable-http transport",
+    ),
 ):
-    """Start MCP stdio server for document search."""
+    """Start MCP server for document search with specified transport."""
     try:
         if not os.path.exists(db):
             console.print(f"[red]Error: Database file {db} not found[/red]")
+            sys.exit(1)
+
+        # Validate transport
+        valid_transports = ["stdio", "streamable-http"]
+        if transport not in valid_transports:
+            console.print(f"[red]Error: Invalid transport '{transport}'. Must be one of: {', '.join(valid_transports)}[/red]")
             sys.exit(1)
 
         # Use relative path for file_path_prefix if not provided
@@ -162,7 +189,11 @@ def serve(
             prefix=file_path_prefix,
             rerank_model=rerank_model,
             tool_name=tool_name,
-            tool_description=tool_description
+            tool_description=tool_description,
+            transport=transport,
+            host=host,
+            port=port,
+            path=path
         )
 
     except Exception as e:

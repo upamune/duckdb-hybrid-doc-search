@@ -1,7 +1,7 @@
-"""MCP stdio server implementation."""
+"""MCP server implementation with support for STDIO and HTTP transports."""
 
 import sys
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 import duckdb
 from mcp.server.fastmcp import FastMCP
@@ -17,9 +17,13 @@ def run_server(
     prefix: str,
     rerank_model: str,
     tool_name: str = "search_documents",
-    tool_description: str = "Search for local documents"
+    tool_description: str = "Search for local documents",
+    transport: Literal["stdio", "streamable-http"] = "stdio",
+    host: str = "127.0.0.1",
+    port: int = 8765,
+    path: str = "/mcp",
 ) -> None:
-    """Run MCP stdio server.
+    """Run MCP server with specified transport.
 
     Args:
         db_path: Path to DuckDB database
@@ -27,10 +31,19 @@ def run_server(
         rerank_model: Hugging Face model ID for reranking
         tool_name: Name of the MCP tool (default: "search_documents")
         tool_description: Description of the MCP tool (default: "Search for local documents")
+        transport: Transport protocol to use (default: "stdio")
+        host: Host to bind to for HTTP transport (default: "127.0.0.1")
+        port: Port to bind to for HTTP transport (default: 8765)
+        path: Path for streamable-http transport (default: "/mcp")
     """
     logger.info(f"Starting MCP server with database: {db_path}")
     logger.info(f"Using tool name: {tool_name}")
     logger.info(f"Using tool description: {tool_description}")
+    logger.info(f"Using transport: {transport}")
+
+    if transport == "streamable-http":
+        logger.info(f"HTTP server will be available at: {host}:{port}")
+        logger.info(f"Streamable HTTP endpoint: {path}")
 
     # Connect to database
     conn = init_db(db_path, read_only=True)
@@ -76,6 +89,10 @@ def run_server(
 
         return {"results": results}
 
-    # Run server
-    logger.info("Starting MCP stdio server")
-    mcp.run(transport="stdio")
+    # Run server with specified transport
+    if transport == "stdio":
+        logger.info("Starting MCP stdio server")
+        mcp.run(transport="stdio")
+    elif transport == "streamable-http":
+        logger.info(f"Starting MCP streamable-http server on {host}:{port}{path}")
+        mcp.run(transport="streamable-http", host=host, port=port, path=path)
