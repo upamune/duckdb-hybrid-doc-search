@@ -1,6 +1,7 @@
 """Document indexer implementation."""
 
 import logging
+import os
 from typing import List
 
 import duckdb
@@ -37,6 +38,12 @@ def index_directories(
         path_prefix_to_trim: Prefix to trim from file paths (e.g., '/app/')
     """
     logger.info(f"Indexing directories: {', '.join(directories)}")
+
+    # Log path prefix trimming information
+    if path_prefix_to_trim:
+        logger.info(f"Will trim path prefix: '{path_prefix_to_trim}'")
+    else:
+        logger.info("No path prefix trimming configured")
 
     # Clear existing documents if requested
     if clear:
@@ -93,6 +100,8 @@ def index_directories(
 
     # Prepare data for batch insert
     data = []
+    trimmed_count = 0
+
     for i, chunk in enumerate(chunks):
         # Generate a ULID for each document
         doc_id = str(ULID())
@@ -101,8 +110,30 @@ def index_directories(
         file_path = chunk.file_path
 
         # Trim specified prefix if provided
-        if path_prefix_to_trim and file_path.startswith(path_prefix_to_trim):
-            file_path = file_path[len(path_prefix_to_trim):]
+        if path_prefix_to_trim:
+            # Normalize both paths to ensure consistent format
+            norm_file_path = os.path.normpath(file_path)
+            norm_prefix = os.path.normpath(path_prefix_to_trim)
+
+            # Log the paths for debugging
+            logger.debug(f"Original file path: {file_path}")
+            logger.debug(f"Normalized file path: {norm_file_path}")
+            logger.debug(f"Normalized prefix to trim: {norm_prefix}")
+
+            # Check if the normalized file path starts with the normalized prefix
+            if norm_file_path.startswith(norm_prefix):
+                # Remove the prefix
+                file_path = norm_file_path[len(norm_prefix):]
+                # Ensure the path starts with a slash if it's not empty
+                if file_path and not file_path.startswith('/'):
+                    file_path = '/' + file_path
+                # Remove leading slash if present (to get a relative path)
+                if file_path.startswith('/'):
+                    file_path = file_path[1:]
+                logger.debug(f"Trimmed file path: {file_path}")
+                trimmed_count += 1
+            else:
+                logger.debug(f"Path does not start with prefix, not trimming: {norm_file_path}")
 
         data.append(
             {
@@ -140,5 +171,9 @@ def index_directories(
             for d in data
         ],
     )
+
+    # Log summary of path trimming
+    if path_prefix_to_trim:
+        logger.info(f"Path prefix trimming: {trimmed_count}/{len(chunks)} paths were trimmed")
 
     logger.info(f"Indexed {len(chunks)} chunks successfully")
