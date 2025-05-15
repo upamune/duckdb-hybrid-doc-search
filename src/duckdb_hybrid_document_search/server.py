@@ -19,7 +19,7 @@ def run_server(
     tool_name: str = "search_documents",
     tool_description: str = "Search for local documents",
     transport: Literal["stdio", "streamable-http"] = "stdio",
-    host: str = "127.0.0.1",
+    host: str = "0.0.0.0",
     port: int = 8765,
     path: str = "/mcp",
 ) -> None:
@@ -32,7 +32,7 @@ def run_server(
         tool_name: Name of the MCP tool (default: "search_documents")
         tool_description: Description of the MCP tool (default: "Search for local documents")
         transport: Transport protocol to use (default: "stdio")
-        host: Host to bind to for HTTP transport (default: "127.0.0.1")
+        host: Host to bind to for HTTP transport (default: "0.0.0.0")
         port: Port to bind to for HTTP transport (default: 8765)
         path: Path for streamable-http transport (default: "/mcp")
     """

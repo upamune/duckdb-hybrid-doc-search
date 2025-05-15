@@ -152,7 +152,7 @@ def serve(
         help="Transport protocol to use (stdio, streamable-http)",
     ),
     host: str = typer.Option(
-        "127.0.0.1",
+        "0.0.0.0",
         "--host",
         help="Host to bind to for HTTP transport",
     ),
