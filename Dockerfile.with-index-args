@@ -15,8 +15,8 @@ RUN duckdb-hybrid-doc-search index /app/docs \
     --embedding-model ${EMBEDDING_MODEL} \
     --trim-path-prefix "/app/"
 
-# Pre-download and cache the reranker model
-RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('${RERANK_MODEL}')"
+# Pre-download and cache the embedding and reranker models
+RUN duckdb-hybrid-doc-search download-models ${EMBEDDING_MODEL} ${RERANK_MODEL}
 
 WORKDIR /app
 

@@ -12,6 +12,8 @@ from rich.console import Console
 from duckdb_hybrid_document_search import __version__
 from duckdb_hybrid_document_search.db import init_db, store_setting
 from duckdb_hybrid_document_search.indexer import index_directories
+from duckdb_hybrid_document_search.models.embedding import get_embedding_model
+from duckdb_hybrid_document_search.models.reranker import get_reranker_model
 from duckdb_hybrid_document_search.searcher import init_models
 from duckdb_hybrid_document_search.server import run_server
 from duckdb_hybrid_document_search.splitter import SplitterType
@@ -344,6 +346,43 @@ def search(
 
     except Exception as e:
         console.print(f"[red]Error during search: {str(e)}[/red]")
+        sys.exit(1)
+
+
+@app.command()
+def download_models(
+    models: List[str] = typer.Argument(
+        ...,
+        help="Hugging Face model IDs to download (can specify multiple models)",
+    ),
+):
+    """Pre-download and cache models to avoid delay on first search.
+
+    This command downloads and caches the specified models so they don't need to be
+    downloaded on first use. You can specify multiple models by separating them with spaces.
+
+    Example:
+        duckdb-hybrid-doc-search download-models cl-nagoya/ruri-v3-310m cl-nagoya/ruri-v3-reranker-310m
+    """
+    try:
+        for model in models:
+            console.print(f"Downloading model: [bold]{model}[/bold]")
+
+            # Try to determine if this is an embedding model or a reranker model
+            # This is a simple heuristic based on model name
+            if "reranker" in model.lower():
+                console.print("Detected as a reranker model")
+                get_reranker_model(model)
+                console.print(f"[green]Successfully downloaded and cached reranker model: {model}[/green]")
+            else:
+                console.print("Detected as an embedding model")
+                get_embedding_model(model)
+                console.print(f"[green]Successfully downloaded and cached embedding model: {model}[/green]")
+
+        console.print(f"[green]All {len(models)} models have been successfully downloaded and cached[/green]")
+
+    except Exception as e:
+        console.print(f"[red]Error downloading models: {str(e)}[/red]")
         sys.exit(1)
 
 
