@@ -117,9 +117,32 @@ def search(
         [tokens_q, top_k],
     ).fetchall()
 
+    logger.info(f"FTS search found {len(fts_results)} results")
+    if fts_results:
+        logger.debug(f"Top FTS results: {fts_results[:3]}")
+
     # VSS search
-    # Skip VSS search for now due to type issues
-    vss_results = []
+    try:
+        # Convert embedding to list for SQL compatibility
+        embedding_list = embedding_q.tolist()
+
+        # Perform VSS search using HNSW index
+        vss_results = conn.execute(
+            """
+        SELECT doc_id, vss_hnsw_documents.cosine_similarity(embedding, ?) AS score
+        FROM documents
+        ORDER BY score DESC
+        LIMIT ?
+        """,
+            [embedding_list, top_k],
+        ).fetchall()
+
+        logger.info(f"VSS search found {len(vss_results)} results")
+        if vss_results:
+            logger.debug(f"Top VSS results: {vss_results[:3]}")
+    except Exception as e:
+        logger.error(f"VSS search failed: {e}")
+        vss_results = []
 
     # Merge results
     doc_ids = set()
@@ -151,6 +174,10 @@ def search(
         merged_ids,
     ).fetchall()
 
+    # Create score maps for FTS and VSS results
+    fts_scores = {doc_id: score for doc_id, score in fts_results}
+    vss_scores = {doc_id: score for doc_id, score in vss_results}
+
     # Convert to dictionaries
     results = []
     for doc in documents:
@@ -163,6 +190,23 @@ def search(
         else:
             full_path = file_path
 
+        # Calculate hybrid score (combine FTS and VSS scores)
+        fts_score = fts_scores.get(doc_id, 0.0)
+        vss_score = vss_scores.get(doc_id, 0.0)
+
+        # Normalize and combine scores (simple average for now)
+        # We could use a weighted average if one method is more reliable
+        hybrid_score = 0.0
+        if doc_id in fts_scores and doc_id in vss_scores:
+            # Both methods found this document
+            hybrid_score = (fts_score + vss_score) / 2.0
+        elif doc_id in fts_scores:
+            # Only FTS found this document
+            hybrid_score = fts_score * 0.8  # Slightly reduce score for single-method matches
+        elif doc_id in vss_scores:
+            # Only VSS found this document
+            hybrid_score = vss_score * 0.8  # Slightly reduce score for single-method matches
+
         results.append(
             {
                 "doc_id": doc_id,
@@ -171,12 +215,20 @@ def search(
                 "line_start": line_start,
                 "line_end": line_end,
                 "content": content,
-                "score": 0.0,  # Will be updated by reranking
+                "score": hybrid_score,  # Initial score before reranking
+                "fts_score": fts_score,
+                "vss_score": vss_score,
             }
         )
 
+    # Sort by initial hybrid score before reranking
+    results.sort(key=lambda x: x["score"], reverse=True)
+
     # Rerank results if requested
-    if rerank and _reranker_model:
+    if rerank and _reranker_model and results:
+        # Log initial scores for debugging
+        logger.debug(f"Initial scores before reranking: {[(r['doc_id'], r['score']) for r in results[:5]]}")
+
         reranked = rerank_results(
             _reranker_model,
             query,
@@ -185,12 +237,25 @@ def search(
 
         # Update scores and sort results
         for i, (idx, score) in enumerate(reranked):
+            # Store original score for debugging
+            results[idx]["original_score"] = results[idx]["score"]
+            # Update with reranker score
             results[idx]["score"] = float(score)
+
+        # Log reranked scores for debugging
+        logger.debug(f"Reranked scores: {[(r['doc_id'], r['score']) for r in sorted(results[:5], key=lambda x: x['score'], reverse=True)]}")
 
         # Sort by score in descending order
         results.sort(key=lambda x: x["score"], reverse=True)
 
-        # Limit to top_k
-        results = results[:top_k]
+    # Filter out results with very low scores (threshold can be adjusted)
+    score_threshold = 0.01  # Minimum acceptable score
+    filtered_results = [r for r in results if r["score"] > score_threshold]
 
-    return results
+    if len(filtered_results) < len(results):
+        logger.info(f"Filtered out {len(results) - len(filtered_results)} results with scores below {score_threshold}")
+
+    # Limit to top_k
+    filtered_results = filtered_results[:top_k]
+
+    return filtered_results
