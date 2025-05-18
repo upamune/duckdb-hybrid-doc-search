@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.0.8](https://github.com/upamune/duckdb-hybrid-doc-search/compare/v0.0.7...v0.0.8) - 2025-05-18
+- Fix: Implement VSS search and improve hybrid scoring by @upamune in https://github.com/upamune/duckdb-hybrid-doc-search/pull/14
+
 ## [v0.0.7](https://github.com/upamune/duckdb-hybrid-doc-search/compare/v0.0.6...v0.0.7) - 2025-05-15
 
 ## [v0.0.6](https://github.com/upamune/duckdb-hybrid-doc-search/compare/v0.0.5...v0.0.6) - 2025-05-15
