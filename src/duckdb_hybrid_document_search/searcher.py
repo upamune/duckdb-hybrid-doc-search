@@ -127,11 +127,14 @@ def search(
         embedding_list = embedding_q.tolist()
 
         # Perform VSS search using HNSW index
+        # Get embedding dimension from the list
+        embedding_dim = len(embedding_list)
+
         vss_results = conn.execute(
-            """
-        SELECT doc_id, vss_hnsw_documents.cosine_similarity(embedding, ?) AS score
+            f"""
+        SELECT doc_id, array_cosine_distance(embedding, ?::FLOAT[{embedding_dim}]) AS score
         FROM documents
-        ORDER BY score DESC
+        ORDER BY score ASC
         LIMIT ?
         """,
             [embedding_list, top_k],
@@ -191,21 +194,29 @@ def search(
             full_path = file_path
 
         # Calculate hybrid score (combine FTS and VSS scores)
-        fts_score = fts_scores.get(doc_id, 0.0)
-        vss_score = vss_scores.get(doc_id, 0.0)
+        # Get the score from the map; it could be None if the DB returned NULL for score
+        _fts_score_from_map = fts_scores.get(doc_id)
+        _vss_score_from_map = vss_scores.get(doc_id)
 
-        # Normalize and combine scores (simple average for now)
-        # We could use a weighted average if one method is more reliable
+        # Ensure scores are float, defaulting to 0.0 if None
+        fts_score_val = _fts_score_from_map if _fts_score_from_map is not None else 0.0
+        vss_score_val = _vss_score_from_map if _vss_score_from_map is not None else 0.0
+
+        # Determine if the document was found by each method (i.e., score was not NULL and doc_id was present)
+        doc_found_by_fts = _fts_score_from_map is not None
+        doc_found_by_vss = _vss_score_from_map is not None
+
         hybrid_score = 0.0
-        if doc_id in fts_scores and doc_id in vss_scores:
-            # Both methods found this document
-            hybrid_score = (fts_score + vss_score) / 2.0
-        elif doc_id in fts_scores:
-            # Only FTS found this document
-            hybrid_score = fts_score * 0.8  # Slightly reduce score for single-method matches
-        elif doc_id in vss_scores:
-            # Only VSS found this document
-            hybrid_score = vss_score * 0.8  # Slightly reduce score for single-method matches
+        if doc_found_by_fts and doc_found_by_vss:
+            # Both methods found this document with a valid score
+            hybrid_score = (fts_score_val + vss_score_val) / 2.0
+        elif doc_found_by_fts:
+            # Only FTS found this document with a valid score
+            hybrid_score = fts_score_val * 0.8
+        elif doc_found_by_vss:
+            # Only VSS found this document with a valid score
+            hybrid_score = vss_score_val * 0.8
+        # If neither method found the document with a valid score, hybrid_score remains 0.0.
 
         results.append(
             {
@@ -215,9 +226,9 @@ def search(
                 "line_start": line_start,
                 "line_end": line_end,
                 "content": content,
-                "score": hybrid_score,  # Initial score before reranking
-                "fts_score": fts_score,
-                "vss_score": vss_score,
+                "score": hybrid_score,
+                "fts_score": fts_score_val,
+                "vss_score": vss_score_val,
             }
         )
 
@@ -225,28 +236,56 @@ def search(
     results.sort(key=lambda x: x["score"], reverse=True)
 
     # Rerank results if requested
-    if rerank and _reranker_model and results:
+    if rerank and results:
         # Log initial scores for debugging
         logger.debug(f"Initial scores before reranking: {[(r['doc_id'], r['score']) for r in results[:5]]}")
 
-        reranked = rerank_results(
-            _reranker_model,
-            query,
-            [r["content"] for r in results],
-        )
+        # Check if reranker model is available
+        if _reranker_model is None:
+            logger.warning("Reranker model is None. Skipping reranking.")
+        else:
+            try:
+                # Make a copy of the original scores in case reranking fails
+                for r in results:
+                    r["original_score"] = r["score"]
 
-        # Update scores and sort results
-        for i, (idx, score) in enumerate(reranked):
-            # Store original score for debugging
-            results[idx]["original_score"] = results[idx]["score"]
-            # Update with reranker score
-            results[idx]["score"] = float(score)
+                # Perform reranking
+                reranked = rerank_results(
+                    _reranker_model,
+                    query,
+                    [r["content"] for r in results],
+                )
 
-        # Log reranked scores for debugging
-        logger.debug(f"Reranked scores: {[(r['doc_id'], r['score']) for r in sorted(results[:5], key=lambda x: x['score'], reverse=True)]}")
+                # Only update scores if reranking was successful
+                if reranked and len(reranked) > 0:
+                    # Update scores and sort results
+                    for i, (idx, score) in enumerate(reranked):
+                        if idx < len(results):  # Ensure index is valid
+                            # Update with reranker score
+                            if score is not None:
+                                try:
+                                    results[idx]["score"] = float(score)
+                                except (TypeError, ValueError) as e:
+                                    logger.warning(f"Could not convert reranker score to float: {score}, error: {e}")
+                                    # Keep original score
+                                    results[idx]["score"] = results[idx]["original_score"]
+                            else:
+                                # Keep original score if reranker score is None
+                                results[idx]["score"] = results[idx]["original_score"]
 
-        # Sort by score in descending order
-        results.sort(key=lambda x: x["score"], reverse=True)
+                    # Log reranked scores for debugging
+                    logger.debug(f"Reranked scores: {[(r['doc_id'], r['score']) for r in sorted(results[:5], key=lambda x: x['score'], reverse=True)]}")
+
+                    # Sort by score in descending order
+                    results.sort(key=lambda x: x["score"], reverse=True)
+                else:
+                    logger.warning("Reranking returned empty results. Using original scores.")
+            except Exception as e:
+                logger.error(f"Error during reranking: {e}")
+                # Restore original scores if reranking fails
+                for r in results:
+                    if "original_score" in r:
+                        r["score"] = r["original_score"]
 
     # Filter out results with very low scores (threshold can be adjusted)
     score_threshold = 0.01  # Minimum acceptable score

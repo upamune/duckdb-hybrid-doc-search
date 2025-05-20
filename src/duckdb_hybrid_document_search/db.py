@@ -155,11 +155,12 @@ def create_schema(conn: duckdb.DuckDBPyConnection, embedding_dim: int = 384) -> 
     # Enable HNSW persistence for VSS index
     conn.execute("SET hnsw_enable_experimental_persistence=true;")
 
-    # Create VSS index
+    # Create VSS index with cosine metric
     conn.execute(
         """
     CREATE INDEX IF NOT EXISTS idx_embedding
-      ON documents USING HNSW (embedding);
+      ON documents USING HNSW (embedding)
+      WITH (metric = 'cosine');
     """
     )
 
