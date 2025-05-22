@@ -16,6 +16,7 @@ def run_server(
     db_path: str,
     prefix: str,
     rerank_model: str,
+    path_prefix_to_remove: Optional[str] = None,
     tool_name: str = "search_documents",
     tool_description: str = "Search for local documents",
     transport: Literal["stdio", "streamable-http"] = "stdio",
@@ -29,6 +30,7 @@ def run_server(
         db_path: Path to DuckDB database
         prefix: Prefix to add to file paths in search results
         rerank_model: Hugging Face model ID for reranking
+        path_prefix_to_remove: Prefix to remove from file paths in search results
         tool_name: Name of the MCP tool (default: "search_documents")
         tool_description: Description of the MCP tool (default: "Search for local documents")
         transport: Transport protocol to use (default: "stdio")
@@ -86,6 +88,7 @@ def run_server(
             query=query,
             top_k=top_k,
             file_path_prefix=prefix,
+            path_prefix_to_remove=path_prefix_to_remove,
             rerank=True,
         )
 

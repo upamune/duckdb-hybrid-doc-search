@@ -78,6 +78,7 @@ def search(
     query: str,
     top_k: int = 5,
     file_path_prefix: Optional[str] = None,
+    path_prefix_to_remove: Optional[str] = None,
     rerank: bool = True,
 ) -> List[Dict[str, Union[str, int, float]]]:
     """Search for documents using hybrid search.
@@ -87,6 +88,7 @@ def search(
         query: Search query
         top_k: Number of results to return
         file_path_prefix: Prefix to add to file paths in results
+        path_prefix_to_remove: Prefix to remove from file paths in results
         rerank: Whether to rerank results
 
     Returns:
@@ -186,12 +188,22 @@ def search(
     for doc in documents:
         doc_id, file_path, header_path, line_start, line_end, content = doc
 
-        # Add file path prefix if provided
+        # Process file path: first remove prefix, then add new prefix
+        processed_path = file_path
+
+        # Step 1: Remove prefix if provided and if the path starts with it
+        if path_prefix_to_remove and processed_path.startswith(path_prefix_to_remove):
+            processed_path = processed_path[len(path_prefix_to_remove):]
+            # Remove leading slash if present
+            if processed_path.startswith('/'):
+                processed_path = processed_path[1:]
+
+        # Step 2: Add prefix if provided
         if file_path_prefix:
             # Use the full relative path, not just the basename
-            full_path = os.path.join(file_path_prefix, file_path)
+            full_path = os.path.join(file_path_prefix, processed_path)
         else:
-            full_path = file_path
+            full_path = processed_path
 
         # Calculate hybrid score (combine FTS and VSS scores)
         # Get the score from the map; it could be None if the DB returned NULL for score
