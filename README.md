@@ -126,6 +126,32 @@ docker run -v /path/to/index.duckdb:/app/index.duckdb -it \
     search --db /app/index.duckdb --rerank-model cl-nagoya/ruri-v3-reranker-310m
 ```
 
+#### Path Manipulation in Search Results
+
+You can manipulate file paths in search results using the following flags:
+
+```bash
+# Remove a prefix from file paths in search results
+duckdb-hybrid-doc-search search --query "example" --remove-path-prefix "/app/"
+
+# Add a prefix to file paths in search results
+duckdb-hybrid-doc-search search --query "example" --add-path-prefix "docs/"
+
+# Combine both: first remove, then add prefix
+duckdb-hybrid-doc-search search --query "example" \
+    --remove-path-prefix "/app/" \
+    --add-path-prefix "docs/"
+```
+
+These flags are also available for the MCP server:
+
+```bash
+# Start server with path manipulation
+duckdb-hybrid-doc-search serve --db index.duckdb \
+    --remove-path-prefix "/app/" \
+    --add-path-prefix "docs/"
+```
+
 ### Using as an MCP Server with VS Code and Cursor
 
 #### VS Code Configuration

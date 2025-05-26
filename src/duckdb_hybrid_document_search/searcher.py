@@ -77,7 +77,8 @@ def search(
     conn: duckdb.DuckDBPyConnection,
     query: str,
     top_k: int = 5,
-    file_path_prefix: Optional[str] = None,
+    add_path_prefix: Optional[str] = None,
+    remove_path_prefix: Optional[str] = None,
     rerank: bool = True,
 ) -> List[Dict[str, Union[str, int, float]]]:
     """Search for documents using hybrid search.
@@ -86,7 +87,8 @@ def search(
         conn: DuckDB connection
         query: Search query
         top_k: Number of results to return
-        file_path_prefix: Prefix to add to file paths in results
+        add_path_prefix: Prefix to add to file paths in results
+        remove_path_prefix: Prefix to remove from file paths in results
         rerank: Whether to rerank results
 
     Returns:
@@ -186,12 +188,32 @@ def search(
     for doc in documents:
         doc_id, file_path, header_path, line_start, line_end, content = doc
 
-        # Add file path prefix if provided
-        if file_path_prefix:
+        # Process file path: first trim prefix if specified, then add prefix if specified
+        processed_path = file_path
+
+        # 1. Remove path prefix if provided
+        if remove_path_prefix:
+            # Normalize both paths to ensure consistent format
+            norm_file_path = os.path.normpath(processed_path)
+            norm_prefix = os.path.normpath(remove_path_prefix)
+
+            # Check if the normalized file path starts with the normalized prefix
+            if norm_file_path.startswith(norm_prefix):
+                # Remove the prefix
+                processed_path = norm_file_path[len(norm_prefix):]
+                # Ensure the path starts with a slash if it's not empty
+                if processed_path and not processed_path.startswith('/'):
+                    processed_path = '/' + processed_path
+                # Remove leading slash if present (to get a relative path)
+                if processed_path.startswith('/'):
+                    processed_path = processed_path[1:]
+
+        # 2. Add path prefix if provided
+        if add_path_prefix:
             # Use the full relative path, not just the basename
-            full_path = os.path.join(file_path_prefix, file_path)
+            full_path = os.path.join(add_path_prefix, processed_path)
         else:
-            full_path = file_path
+            full_path = processed_path
 
         # Calculate hybrid score (combine FTS and VSS scores)
         # Get the score from the map; it could be None if the DB returned NULL for score

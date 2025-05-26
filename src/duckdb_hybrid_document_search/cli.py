@@ -123,11 +123,16 @@ def serve(
         "-d",
         help="Path to DuckDB database file",
     ),
-    file_path_prefix: Optional[str] = typer.Option(
+    add_path_prefix: Optional[str] = typer.Option(
         None,
-        "--file-path-prefix",
+        "--add-path-prefix",
         "-p",
         help="Prefix to add to file paths in search results",
+    ),
+    remove_path_prefix: Optional[str] = typer.Option(
+        None,
+        "--remove-path-prefix",
+        help="Prefix to remove from file paths in search results",
     ),
     rerank_model: str = typer.Option(
         "cl-nagoya/ruri-v3-reranker-310m",
@@ -179,14 +184,15 @@ def serve(
             console.print(f"[red]Error: Invalid transport '{transport}'. Must be one of: {', '.join(valid_transports)}[/red]")
             sys.exit(1)
 
-        # Use relative path for file_path_prefix if not provided
-        if file_path_prefix is None:
-            file_path_prefix = os.path.dirname(db)
+        # Use relative path for add_path_prefix if not provided
+        if add_path_prefix is None:
+            add_path_prefix = os.path.dirname(db)
 
         # Start server
         run_server(
             db_path=db,
-            prefix=file_path_prefix,
+            prefix=add_path_prefix,
+            trim_prefix=remove_path_prefix,
             rerank_model=rerank_model,
             tool_name=tool_name,
             tool_description=tool_description,
@@ -205,7 +211,8 @@ def perform_search(
     conn: duckdb.DuckDBPyConnection,
     query: str,
     top_k: int,
-    file_path_prefix: Optional[str],
+    add_path_prefix: Optional[str],
+    remove_path_prefix: Optional[str],
     rerank: bool,
     embedding_model: str,
     rerank_model: str,
@@ -217,7 +224,8 @@ def perform_search(
         conn: DuckDB connection
         query: Search query
         top_k: Number of results to return
-        file_path_prefix: Prefix to add to file paths in results
+        add_path_prefix: Prefix to add to file paths in results
+        remove_path_prefix: Prefix to remove from file paths in results
         rerank: Whether to rerank results
         embedding_model: Embedding model name
         rerank_model: Reranking model name
@@ -230,7 +238,8 @@ def perform_search(
         conn=conn,
         query=query,
         top_k=top_k,
-        file_path_prefix=file_path_prefix,
+        add_path_prefix=add_path_prefix,
+        remove_path_prefix=remove_path_prefix,
         rerank=rerank,
     )
 
@@ -275,11 +284,17 @@ def search(
         min=1,
         max=100,
     ),
-    file_path_prefix: Optional[str] = typer.Option(
+    add_path_prefix: Optional[str] = typer.Option(
         None,
-        "--file-path-prefix",
+        "--add-path-prefix",
         "-p",
         help="Prefix to add to file paths in search results",
+    ),
+    remove_path_prefix: Optional[str] = typer.Option(
+        None,
+        "--remove-path-prefix",
+        "-t",
+        help="Prefix to remove from file paths in search results",
     ),
     rerank_model: str = typer.Option(
         "cl-nagoya/ruri-v3-reranker-310m",
@@ -302,9 +317,9 @@ def search(
             console.print(f"[red]Error: Database file {db} not found[/red]")
             sys.exit(1)
 
-        # Use relative path for file_path_prefix if not provided
-        if file_path_prefix is None:
-            file_path_prefix = os.path.dirname(db)
+        # Use relative path for add_path_prefix if not provided
+        if add_path_prefix is None:
+            add_path_prefix = os.path.dirname(db)
 
         # Connect to database
         conn = init_db(db, read_only=True)
@@ -349,7 +364,8 @@ def search(
                         conn=conn,
                         query=query,
                         top_k=top_k,
-                        file_path_prefix=file_path_prefix,
+                        add_path_prefix=add_path_prefix,
+                        remove_path_prefix=remove_path_prefix,
                         rerank=not no_rerank,
                         embedding_model=embedding_model,
                         rerank_model=rerank_model,
@@ -368,7 +384,8 @@ def search(
                 conn=conn,
                 query=query,
                 top_k=top_k,
-                file_path_prefix=file_path_prefix,
+                add_path_prefix=add_path_prefix,
+                remove_path_prefix=remove_path_prefix,
                 rerank=not no_rerank,
                 embedding_model=embedding_model,
                 rerank_model=rerank_model,

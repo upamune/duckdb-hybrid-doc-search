@@ -22,6 +22,7 @@ def run_server(
     host: str = "0.0.0.0",
     port: int = 8765,
     path: str = "/mcp",
+    trim_prefix: Optional[str] = None,
 ) -> None:
     """Run MCP server with specified transport.
 
@@ -35,6 +36,7 @@ def run_server(
         host: Host to bind to for HTTP transport (default: "0.0.0.0")
         port: Port to bind to for HTTP transport (default: 8765)
         path: Path for streamable-http transport (default: "/mcp")
+        trim_prefix: Prefix to remove from file paths in search results
     """
     logger.info(f"Starting MCP server with database: {db_path}")
     logger.info(f"Using tool name: {tool_name}")
@@ -85,7 +87,8 @@ def run_server(
             conn=conn,
             query=query,
             top_k=top_k,
-            file_path_prefix=prefix,
+            add_path_prefix=prefix,
+            remove_path_prefix=trim_prefix,
             rerank=True,
         )
 
